@@ -1,0 +1,39 @@
+name: "Lab 3-4 · Call a reusable workflow"
+
+on:
+  workflow_dispatch:
+    inputs:
+      python-version:
+        description: Python version for the reusable workflow
+        type: choice
+        options: ["3.12", "3.13", "3.14"]
+        default: "3.13"
+  pull_request:
+    paths:
+      - ".github/workflows/reusable-python-tests.yml"
+      - ".github/actions/setup-and-test/**"
+
+permissions:
+  contents: read
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/reusable-python-tests.yml
+    with:
+      python-version: ${{ inputs.python-version || '3.13' }}
+
+  use-output:
+    needs: run-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read the reusable workflow output
+        env:
+          RESULT_LINE: ${{ needs.run-tests.outputs.result-line }}
+        run: |
+          echo "Reusable workflow reported: $RESULT_LINE"
+          {
+            echo "### Reusable workflow output"
+            echo
+            echo "\`$RESULT_LINE\`"
+          } >> "$GITHUB_STEP_SUMMARY"

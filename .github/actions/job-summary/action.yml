@@ -1,0 +1,19 @@
+name: Inventory job summary
+description: JavaScript action that reads an inventory file and writes a job summary and an output.
+
+inputs:
+  inventory-file:
+    description: Path to a JSON file with an array of {sku, quantity, reorder_level}
+    required: true
+  fail-on-low-stock:
+    description: Set to "true" to fail the step when any SKU is at or below its reorder level
+    required: false
+    default: "false"
+
+outputs:
+  low-stock-count:
+    description: Number of SKUs at or below their reorder level
+
+runs:
+  using: node24
+  main: index.js

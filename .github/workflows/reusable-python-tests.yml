@@ -1,0 +1,38 @@
+name: Reusable · Python tests
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: Python version to test with
+        type: string
+        default: "3.13"
+      test-path:
+        description: Folder that contains the tests
+        type: string
+        default: tests
+    outputs:
+      result-line:
+        description: Last line of the pytest output
+        value: ${{ jobs.tests.outputs.result-line }}
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      result-line: ${{ steps.run.outputs.result-line }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python and run tests (composite action)
+        id: run
+        uses: ./.github/actions/setup-and-test
+        with:
+          python-version: ${{ inputs.python-version }}
+          test-path: ${{ inputs.test-path }}

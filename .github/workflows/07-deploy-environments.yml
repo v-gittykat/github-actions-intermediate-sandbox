@@ -1,0 +1,62 @@
+name: "Lab 7 · Deploy with environments"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - id: version
+        run: echo "version=1.0.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: staging
+      url: https://staging.example.com
+    steps:
+      - name: Simulated deploy
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          TARGET: ${{ vars.TARGET_NAME }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          if [ -z "$DEPLOY_TOKEN" ]; then
+            echo "::error::DEPLOY_TOKEN is not set for the staging environment. See labs/07-environments-and-secrets.md."
+            exit 1
+          fi
+          echo "Deploying $VERSION to $TARGET"
+          echo "Token received: $DEPLOY_TOKEN (GitHub masks secret values in logs)"
+
+  deploy-production:
+    needs: [build, deploy-staging]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: production
+      url: https://www.example.com
+    steps:
+      - name: Simulated deploy
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          TARGET: ${{ vars.TARGET_NAME }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          if [ -z "$DEPLOY_TOKEN" ]; then
+            echo "::error::DEPLOY_TOKEN is not set for the production environment."
+            exit 1
+          fi
+          echo "Deploying $VERSION to $TARGET after approval"

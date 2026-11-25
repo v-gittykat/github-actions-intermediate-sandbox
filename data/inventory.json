@@ -1,0 +1,5 @@
+[
+  { "sku": "KB-01", "quantity": 3, "reorder_level": 5 },
+  { "sku": "MS-02", "quantity": 12, "reorder_level": 5 },
+  { "sku": "HD-03", "quantity": 5, "reorder_level": 4 }
+]

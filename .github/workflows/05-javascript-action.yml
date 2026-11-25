@@ -1,0 +1,39 @@
+name: "Lab 5 · JavaScript action"
+
+on:
+  workflow_dispatch:
+    inputs:
+      fail-on-low-stock:
+        description: Fail the run when stock is low
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths:
+      - "data/inventory.json"
+      - ".github/actions/job-summary/**"
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check inventory
+        id: check
+        uses: ./.github/actions/job-summary
+        with:
+          inventory-file: data/inventory.json
+          fail-on-low-stock: ${{ inputs.fail-on-low-stock || false }}
+
+      - name: React to the action output
+        if: ${{ steps.check.outputs.low-stock-count != '0' }}
+        env:
+          LOW: ${{ steps.check.outputs.low-stock-count }}
+        run: echo "Follow-up needed for $LOW SKU(s)."

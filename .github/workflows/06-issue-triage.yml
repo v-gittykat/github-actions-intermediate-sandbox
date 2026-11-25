@@ -1,0 +1,41 @@
+name: "Lab 6 · Automate issue triage"
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue-number:
+        description: Issue number to triage again
+        required: true
+        type: number
+
+permissions:
+  issues: write
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      ISSUE: ${{ github.event.issue.number || inputs.issue-number }}
+      TITLE: ${{ github.event.issue.title }}
+    steps:
+      - name: Make sure the labels exist
+        run: |
+          gh label create stock --color FBCA04 --description "Inventory or stock problem" --force
+          gh label create needs-triage --color D4C5F9 --description "Waiting for a maintainer" --force
+
+      - name: Label and acknowledge
+        run: |
+          if [ -z "$TITLE" ]; then
+            TITLE=$(gh issue view "$ISSUE" --json title --jq .title)
+          fi
+          labels="needs-triage"
+          if printf '%s' "$TITLE" | grep -qiE 'stock|sku|inventory'; then
+            labels="$labels,stock"
+          fi
+          gh issue edit "$ISSUE" --add-label "$labels"
+          gh issue comment "$ISSUE" --body "Thanks! A GitHub Actions workflow labeled this issue automatically (labels: \`$labels\`)."
